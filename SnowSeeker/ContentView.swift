@@ -36,7 +36,7 @@ struct ContentView: View {
      
         NavigationView {
             List(resorts) { resort in
-                NavigationLink(destination: Text(resort.name)) {
+                NavigationLink(destination: ResortView(resort: resort)) {
                     Image(resort.country)
                         .resizable()
                         .scaledToFill()
@@ -51,7 +51,7 @@ struct ContentView: View {
 
                     VStack(alignment: .leading) {
                         Text(resort.name)
-                            .font(headline)
+                            .font(.headline)
 
                         Text("\(resort.runs) runs")
                             .foregroundColor(.secondary)
@@ -60,7 +60,10 @@ struct ContentView: View {
 
             }
             .navigationBarTitle("Resorts")
+            
+            WelcomeView()
         }
+//        .phoneOnlyStackNavigationView()
         
 //        Text("Hello, world!")
 //            .padding()
@@ -111,6 +114,17 @@ struct ContentView: View {
 //
 //            Text("Secondary")
 //        }
+    }
+}
+
+extension View {
+    func phoneOnlyStackNavigationView() -> some View {
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            return AnyView(self.navigationViewStyle(StackNavigationViewStyle()))
+        }
+        else {
+            return AnyView(self)
+        }
     }
 }
 
