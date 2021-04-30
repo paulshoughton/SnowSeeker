@@ -53,9 +53,9 @@ struct ContentView: View {
     
     var filteredResorts: [Resort] {
         return resorts.resorts.filter { resort in
-            (resort.country == countryFilter ?? resort.country) &&
-                (resort.price == priceFilter ?? resort.price) &&
-                (resort.size == sizeFilter ?? resort.size)
+            (resort.country == (countryFilter != "All" ? countryFilter : resort.country)) &&
+                (resort.price == (priceFilter != 0 ? priceFilter : resort.price)) &&
+                    (resort.size == (sizeFilter != 0 ? sizeFilter : resort.size))
         }
     }
     
@@ -66,10 +66,10 @@ struct ContentView: View {
 //    @Environment(\.horizontalSizeClass) var sizeClass
     
     @ObservedObject var favourites = Favourites()
-    @State private var sortBy: SortType = .name
-    @State private var countryFilter: String?
-    @State private var priceFilter: Int?
-    @State private var sizeFilter: Int? 
+    @State private var sortBy: SortType = .file
+    @State private var countryFilter: String = "All"
+    @State private var priceFilter: Int = 0
+    @State private var sizeFilter: Int = 0
     
 //    let resorts: [Resort] = Bundle.main.decode("resorts.json")
     let resorts: Resorts = Resorts()
@@ -110,27 +110,43 @@ struct ContentView: View {
 
             }
             .navigationBarTitle("Resorts")
-//            .navigationBarItems(
-//                trailing:
-//                    MenuView()
-//            )
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        Picker(selection: $sortBy, label: Text("Sorting Options")) {
-//                            Text("File").tag(SortType.file)
-//                            Text("Name").tag(SortType.name)
-//                            Text("Country").tag(SortType.country)
-                            
-                            ForEach(SortType.allCases, id: \.self) { value in
-                                Text(value.rawValue)
-                                    .tag(value)
+                        Section {
+                            Picker(selection: $sortBy, label: Text("Sorting Options")) {
+                                ForEach(SortType.allCases, id: \.self) { value in
+                                    Text(value.rawValue)
+                                        .tag(value)
+                                }
                             }
                         }
-                        
-//                        Button("Order Now", action: doNothing)
-//                        Button("Adjust Order", action: doNothing)
-//                        Button("Cancel", action: doNothing)
+                        Section(header: Text("Filter")) {
+                            Menu("Filter by Country") {
+                                Picker(selection: $countryFilter, label: Text("Filter by Country")) {
+                                    Text("All").tag("All")
+                                    ForEach(resorts.countries.sorted(), id: \.self) { value in
+                                        Text(value).tag(value)
+                                    }
+                                }
+                            }
+                            Menu("Filter by Price") {
+                                Picker(selection: $priceFilter, label: Text("Filter by Price")) {
+                                    Text("All").tag(0)
+                                    ForEach(resorts.prices.sorted(), id: \.self) { value in
+                                        Text(resorts.priceToString(value)).tag(value)
+                                    }
+                                }
+                            }
+                            Menu("Filter by Size") {
+                                Picker(selection: $sizeFilter, label: Text("Filter by Size")) {
+                                    Text("All").tag(0)
+                                    ForEach(resorts.sizes.sorted(), id: \.self) { value in
+                                        Text(resorts.sizeToString(value)).tag(value)
+                                    }
+                                }
+                            }
+                        }
                     }
                     label: {
                         Label("Filter and Sort", systemImage: "line.horizontal.3.decrease.circle")
