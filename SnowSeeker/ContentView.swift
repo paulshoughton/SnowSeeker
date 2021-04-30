@@ -21,21 +21,63 @@ import SwiftUI
 //    }
 //}
 
+struct MenuView: View {
+    var body: some View {
+        Menu("Options") {
+            Button("Order Now", action: doNothing)
+            Button("Adjust Order", action: doNothing)
+            Button("Cancel", action: doNothing)
+        }
+    }
+    
+    func doNothing() {
+        
+    }
+}
+
 struct ContentView: View {
+    enum SortType: String, Equatable, CaseIterable {
+        case file = "File", name = "Name", country = "Country"
+    }
+    
+    var sortedResorts: [Resort] {
+        switch sortBy {
+        case .file:
+            return filteredResorts
+        case .name:
+            return filteredResorts.sorted()
+        case .country:
+            return filteredResorts.sorted { $0.country < $1.country }
+        }
+    }
+    
+    var filteredResorts: [Resort] {
+        return resorts.resorts.filter { resort in
+            (resort.country == countryFilter ?? resort.country) &&
+                (resort.price == priceFilter ?? resort.price) &&
+                (resort.size == sizeFilter ?? resort.size)
+        }
+    }
+    
 //    @State private var selectedUser: User? = nil
     
 //    @State private var layoutVertically = false
 
 //    @Environment(\.horizontalSizeClass) var sizeClass
     
-    let resorts: [Resort] = Bundle.main.decode("resorts.json")
+    @ObservedObject var favourites = Favourites()
+    @State private var sortBy: SortType = .name
+    @State private var countryFilter: String?
+    @State private var priceFilter: Int?
+    @State private var sizeFilter: Int? 
     
-
+//    let resorts: [Resort] = Bundle.main.decode("resorts.json")
+    let resorts: Resorts = Resorts()
     
     var body: some View {
      
         NavigationView {
-            List(resorts) { resort in
+            List(sortedResorts) { resort in
                 NavigationLink(destination: ResortView(resort: resort)) {
                     Image(resort.country)
                         .resizable()
@@ -56,13 +98,50 @@ struct ContentView: View {
                         Text("\(resort.runs) runs")
                             .foregroundColor(.secondary)
                     }
+                    .layoutPriority(1)
+                    
+                    if self.favourites.contains(resort) {
+                        Spacer()
+                        Image(systemName: "heart.fill")
+                            .accessibility(label: Text("This is a favourite resort"))
+                            .foregroundColor(.red)
+                    }
                 }
 
             }
             .navigationBarTitle("Resorts")
+//            .navigationBarItems(
+//                trailing:
+//                    MenuView()
+//            )
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Picker(selection: $sortBy, label: Text("Sorting Options")) {
+//                            Text("File").tag(SortType.file)
+//                            Text("Name").tag(SortType.name)
+//                            Text("Country").tag(SortType.country)
+                            
+                            ForEach(SortType.allCases, id: \.self) { value in
+                                Text(value.rawValue)
+                                    .tag(value)
+                            }
+                        }
+                        
+//                        Button("Order Now", action: doNothing)
+//                        Button("Adjust Order", action: doNothing)
+//                        Button("Cancel", action: doNothing)
+                    }
+                    label: {
+                        Label("Filter and Sort", systemImage: "line.horizontal.3.decrease.circle")
+                    }
+                    
+                }
+            }
             
             WelcomeView()
         }
+        .environmentObject(favourites)
 //        .phoneOnlyStackNavigationView()
         
 //        Text("Hello, world!")
@@ -114,6 +193,10 @@ struct ContentView: View {
 //
 //            Text("Secondary")
 //        }
+    }
+    
+    func doNothing() {
+        
     }
 }
 
