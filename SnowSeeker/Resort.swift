@@ -28,7 +28,7 @@ struct Resorts {
         print(sizes)
     }
     
-    func sizeToString(_ sizeNumber: Int) -> String {
+    static func sizeToString(_ sizeNumber: Int) -> String {
         var sizeString: String
             
         switch sizeNumber {
@@ -44,7 +44,7 @@ struct Resorts {
         
     }
     
-    func priceToString(_ priceNumber: Int) -> String {
+    static func priceToString(_ priceNumber: Int) -> String {
         return String(repeating: "$", count: priceNumber)
     }
     

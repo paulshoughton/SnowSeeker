@@ -35,6 +35,36 @@ struct MenuView: View {
     }
 }
 
+struct FilterView: View {
+    var country: String
+    var price: Int
+    var size: Int
+    
+    var filterText: String {
+        var filterArray: [String] = []
+        
+        if country != "All" {
+            filterArray.append(country)
+        }
+        
+        if price != 0 {
+            filterArray.append(Resorts.priceToString(price))
+        }
+        
+        if size != 0 {
+            filterArray.append(Resorts.sizeToString(size))
+        }
+        
+        print(filterArray)
+        
+        return ListFormatter.localizedString(byJoining: filterArray)
+    }
+    
+    var body: some View {
+        Text(filterText)
+    }
+}
+
 struct ContentView: View {
     enum SortType: String, Equatable, CaseIterable {
         case file = "File", name = "Name", country = "Country"
@@ -77,38 +107,55 @@ struct ContentView: View {
     var body: some View {
      
         NavigationView {
-            List(sortedResorts) { resort in
-                NavigationLink(destination: ResortView(resort: resort)) {
-                    Image(resort.country)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 40, height: 25)
-                        .clipShape(
-                            RoundedRectangle(cornerRadius: 5.0)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 5.0)
-                                .stroke(Color.black, lineWidth: 1)
-                        )
-
-                    VStack(alignment: .leading) {
-                        Text(resort.name)
-                            .font(.headline)
-
-                        Text("\(resort.runs) runs")
-                            .foregroundColor(.secondary)
+            List {
+                Section(
+                    header: HStack {
+                        Image(systemName: "arrow.down.square")
+                            .accessibility(label: Text("Sort Ascending:"))
+                        Text("\(sortBy.rawValue)")
+                        if countryFilter != "All" || priceFilter != 0 || sizeFilter != 0 {
+                            Spacer()
+                            Image(systemName: "line.horizontal.3.decrease.circle")
+                                .accessibility(label: Text("Filtered by:"))
+                            FilterView(country: countryFilter, price: priceFilter, size: sizeFilter)
+                        }
                     }
-                    .layoutPriority(1)
-                    
-                    if self.favourites.contains(resort) {
-                        Spacer()
-                        Image(systemName: "heart.fill")
-                            .accessibility(label: Text("This is a favourite resort"))
-                            .foregroundColor(.red)
+                ) {
+                    ForEach(sortedResorts) { resort in
+                        NavigationLink(destination: ResortView(resort: resort)) {
+                            Image(resort.country)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 40, height: 25)
+                                .clipShape(
+                                    RoundedRectangle(cornerRadius: 5.0)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 5.0)
+                                        .stroke(Color.black, lineWidth: 1)
+                                )
+                            
+                            VStack(alignment: .leading) {
+                                Text(resort.name)
+                                    .font(.headline)
+                                
+                                Text("\(resort.runs) runs")
+                                    .foregroundColor(.secondary)
+                            }
+                            .layoutPriority(1)
+                            
+                            if self.favourites.contains(resort) {
+                                Spacer()
+                                Image(systemName: "heart.fill")
+                                    .accessibility(label: Text("This is a favourite resort"))
+                                    .foregroundColor(.red)
+                            }
+                        }
+                        
                     }
                 }
-
             }
+            .listStyle(InsetGroupedListStyle())
             .navigationBarTitle("Resorts")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -122,6 +169,7 @@ struct ContentView: View {
                             }
                         }
                         Section(header: Text("Filter")) {
+                            Button("Clear Filters", action: clearFilters)
                             Menu("Filter by Country") {
                                 Picker(selection: $countryFilter, label: Text("Filter by Country")) {
                                     Text("All").tag("All")
@@ -134,7 +182,7 @@ struct ContentView: View {
                                 Picker(selection: $priceFilter, label: Text("Filter by Price")) {
                                     Text("All").tag(0)
                                     ForEach(resorts.prices.sorted(), id: \.self) { value in
-                                        Text(resorts.priceToString(value)).tag(value)
+                                        Text(Resorts.priceToString(value)).tag(value)
                                     }
                                 }
                             }
@@ -142,14 +190,14 @@ struct ContentView: View {
                                 Picker(selection: $sizeFilter, label: Text("Filter by Size")) {
                                     Text("All").tag(0)
                                     ForEach(resorts.sizes.sorted(), id: \.self) { value in
-                                        Text(resorts.sizeToString(value)).tag(value)
+                                        Text(Resorts.sizeToString(value)).tag(value)
                                     }
                                 }
                             }
                         }
                     }
                     label: {
-                        Label("Filter and Sort", systemImage: "line.horizontal.3.decrease.circle")
+                        Label("Filter and Sort", systemImage: "ellipsis.circle")
                     }
                     
                 }
@@ -209,6 +257,12 @@ struct ContentView: View {
 //
 //            Text("Secondary")
 //        }
+    }
+    
+    func clearFilters() {
+        countryFilter = "All"
+        priceFilter = 0
+        sizeFilter = 0
     }
     
     func doNothing() {
